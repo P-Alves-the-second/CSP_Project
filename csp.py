@@ -50,13 +50,6 @@ for cursos_prof in parsed_data["teacher_courses"].values():
                         problema.addVariable("sala_" + uc + "_1", SALAS)
                         problema.addVariable("sala_" + uc + "_2", SALAS)
 
-for professor in PROFESSORES:
-      blocos_invalidos = list(parsed_data["teacher_restrictions"].get(professor, []))
-      blocos_validos = [b for b in BLOCOS if b not in blocos_invalidos]
-
-for turma in TURMAS:
-      problema.addVariable("ucs_"+turma,parsed_data["class_courses"][turma])
-
 def mostrar_variaveis(problema):
     print("\n=== VARIÁVEIS ADICIONADAS ===")
     for var, domain in problema._variables.items():
