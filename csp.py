@@ -1,58 +1,94 @@
 from parser import parse_dataset
 from pprint import pprint
+from itertools import combinations
+from collections import defaultdict
+from constraints import AllDifferentAttrConstraint, not_same_room
+from models import Aula
+import data
+
+
 from constraint import Problem, AllDifferentConstraint
 
 problema = Problem()
 
-with open("dataset.txt", "r", encoding="utf-8") as f:
-        dataset = f.read()
+parsed_data = data.parsed_data
 
-parsed_data = parse_dataset(dataset)
+TURMAS = data.TURMAS
+PROFESSORES = data.PROFESSORES
+BLOCOS = data.BLOCOS
+SALAS = data.SALAS
+UCS = data.UCS
 
-TURMAS = list(parsed_data["class_courses"].keys())
-PROFESSORES = list(parsed_data["teacher_courses"].keys())
-BLOCOS = list(range(1,21))
-SALAS = ["Room A","Room B","Room c","Lab 02","Lab 01"]
-UCS = []
-
-curso_para_prof = {}
-for prof, cursos in parsed_data["teacher_courses"].items():
+for professor, cursos in parsed_data["teacher_courses"].items():
+    
     for uc in cursos:
-        curso_para_prof[uc] = prof
-
-for cursos_prof in parsed_data["teacher_courses"].values():
-    for uc in cursos_prof:
-        UCS.append(uc)
-
-        professor = curso_para_prof[uc]
         blocos_invalidos = list(parsed_data["teacher_restrictions"].get(professor, []))
         blocos_validos = [b for b in BLOCOS if b not in blocos_invalidos]
 
-        problema.addVariable("bloco_" + uc + "_1",blocos_validos)
-        problema.addVariable("bloco_" + uc + "_2",blocos_validos)
+        turma = data.achar_turma_por_prof_e_uc(professor,uc)
 
-        rooms = [parsed_data["room_restrictions"].get(uc, [])]
+        room = parsed_data["room_restrictions"].get(uc)
+        if room:
+                rooms = [room]
+        else:
+                rooms = SALAS
+        
+        lista_aulas = []
+        lista_aulas_online = []
+
+        for bloco in blocos_validos:
+            for room in rooms:
+                lista_aulas.append(Aula(room,bloco))
+            lista_aulas_online.append(Aula("Online",bloco))
+
         if uc in parsed_data["online_classes"]:
                 aula_online = parsed_data["online_classes"][uc]
-                if aula_online==1:
-                        problema.addVariable("sala_" + uc + "_1",["Online"])
-                        if uc in parsed_data["room_restrictions"]: problema.addVariable("sala_" + uc + "_2", rooms)
-                        else: problema.addVariable("sala_" + uc + "_2", SALAS)
-                elif aula_online==2:
-                        if uc in parsed_data["room_restrictions"]: problema.addVariable("sala_" + uc + "_1", rooms)
-                        else: problema.addVariable("sala_" + uc + "_1", SALAS)  
-                        problema.addVariable("sala_" + uc + "_2",["Online"])   
-        else: 
-                if uc in parsed_data["room_restrictions"]:
-                        problema.addVariable("sala_" + uc + "_1", rooms)
-                        problema.addVariable("sala_" + uc + "_2", rooms)
-                else:
-                        problema.addVariable("sala_" + uc + "_1", SALAS)
-                        problema.addVariable("sala_" + uc + "_2", SALAS)
+                if aula_online == 1:
+                        problema.addVariable(f"aula_{uc}_{professor}_{turma}_1", lista_aulas_online)
+                        problema.addVariable(f"aula_{uc}_{professor}_{turma}_2", lista_aulas)
+                elif aula_online == 2:
+                        problema.addVariable(f"aula_{uc}_{professor}_{turma}_1", lista_aulas)
+                        problema.addVariable(f"aula_{uc}_{professor}_{turma}_2", lista_aulas_online)
+        else:
+                problema.addVariable(f"aula_{uc}_{professor}_{turma}_1", lista_aulas)
+                problema.addVariable(f"aula_{uc}_{professor}_{turma}_2", lista_aulas)
+             
 
-def mostrar_variaveis(problema):
-    print("\n=== VARIÁVEIS ADICIONADAS ===")
-    for var, domain in problema._variables.items():
-        print(f"{var:<25} → {list(domain)}")
+for turma in TURMAS:
+        vars_uc = []
+        vars_uc.extend([v for v in problema._variables.keys() if turma in v and v.startswith("aula_")])
+    
+        problema.addConstraint(AllDifferentAttrConstraint("bloco"), vars_uc)
 
-mostrar_variaveis(problema)
+for prof in PROFESSORES:
+        vars_prof = []
+        
+        vars_prof.extend([v for v in problema._variables.keys() if prof in v and v.startswith("aula_")])
+
+        problema.addConstraint(AllDifferentAttrConstraint("bloco"), vars_prof)
+
+aulas_vars = [v for v in problema._variables.keys() if v.startswith("aula_")]
+
+pares_aulas = list(combinations(aulas_vars, 2))
+
+for a1, a2 in pares_aulas:
+    problema.addConstraint(not_same_room, (a1, a2))
+
+solucao = problema.getSolution()
+if solucao:
+    print("\n=== HORÁRIO GERADO ===\n")
+    print(f"{'Turma':<6} | {'UC':<6} | {'Aula':<5} | {'Bloco':<5} | {'Professor':<10} | {'Sala'}")
+    print("-" * 65)
+
+    for var, valor in sorted(solucao.items()):
+        if var.startswith("aula_"):
+            partes = var.split("_")
+
+            _, uc, professor, turma, aula_idx = partes
+
+            aula = "1ª" if aula_idx == "1" else "2ª"
+            
+            bloco = valor.bloco
+            sala = valor.sala
+
+            print(f"{turma:<6} | {uc:<6} | {aula:<5} | {bloco:<5} | {professor:<10} | {sala}")

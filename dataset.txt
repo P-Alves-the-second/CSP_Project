@@ -6,27 +6,35 @@
 — In this dataset alll classes have 2 lessons per week
 
 #cc — courses assigned to classes (class, courses*)
-t01         UC11 UC12 UC13 UC14 UC15
-t02         UC21 UC22 UC23 UC24 UC25
-t03         UC31 UC32 UC33 UC34 UC35
+LESI       PDM ISI IA SETR PA
+LEEC       PS IM R IE RCSD
+LEIM       GSI IA RCE AST ISC GUS
+LDJG       IAAJ PVR TCGEV PAG
 
 #olw — courses with just one lesson per week
 
 #dsd — courses assigned to lecturers (teacher, courses*)
-jo          UC11 UC21 UC22 UC31
-mike     UC12 UC23 UC32
-rob        UC13 UC14 UC24 UC33
-sue       UC15 UC25 UC34 UC35
+João         PDM PS IM GSI
+Pedro       ISI R IA
+António        IA SETR IE RCE
+Manuel        PA RCSD AST ISC GUS
+Ana        IAAJ PAG
+Isabel      PVR TCGEV
 
 #tr — timeslot  restrictions (teacher, slots_unavailable*)
-mike   13 14 15 16 17 18 19 20
-rob      1 2 3 4
-sue      9 10 11 12 17 18 19 20
+Isabel       13 14 15 16 17 18 19 20
+Manuel        1  2  3  4
+João        9  10 11 12 17 18 19 20
 
 #rr — room  restrictions (course, room)
-UC14   Lab01
-UC22   Lab01
+SETR       Lab01
+IM         Lab01
 
 #oc — online classes (course, lesson_week_index)
-UC21   2
-UC31   2
+PS         2
+GSI        2
+
+#rooms — available rooms
+SalaT
+SalaC
+Lab01

@@ -69,15 +69,10 @@ def parse_dataset(dataset_text: str):
             online_classes[parts[0]] = int(parts[1])
         parsed["online_classes"] = online_classes
 
+    if "rooms" in sections:
+        rooms = []
+        for l in sections["rooms"]:
+            rooms.append(l)
+        parsed["rooms"] = rooms
+
     return parsed
-
-
-if __name__ == "__main__":
-    # 🔽 Lê o dataset de um arquivo de texto
-    with open("dataset.txt", "r", encoding="utf-8") as f:
-        dataset = f.read()
-
-    parsed_data = parse_dataset(dataset)
-
-    # Mostra o resultado formatado
-    pprint(parsed_data)
