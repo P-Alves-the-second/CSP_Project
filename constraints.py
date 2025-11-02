@@ -43,6 +43,24 @@ class MaxAulasPorDiaConstraint(Constraint):
                 if contagem_dias[dia] > self.max_por_dia:
                     return False
         return True
+
+class OnlineMax3SameDayConstraint(Constraint):
+
+    def __call__(self, variables, domains, assignments, forwardcheck=False):
+        aulas_por_turma = defaultdict(list)
+
+        for var in variables:
+            if var in assignments and assignments[var].sala == "Online":
+                partes = var.split("_")
+                turma = partes[3]
+                aulas_por_turma[turma].append(assignments[var])
+
+        for aulas_online in aulas_por_turma.values():
+            if len(aulas_online) <= 3:
+                dias = {bloco_para_dia(a.bloco) for a in aulas_online}
+                if len(dias) > 1:
+                    return False  
+        return True
     
 def penalidade_uc_dias_distintos(solucao):
     penalidade = 0
@@ -59,8 +77,7 @@ def penalidade_uc_dias_distintos(solucao):
         contador = Counter(dias)
         for dia, quantidade in contador.items():
             if quantidade > 1:
-                # Penalidade para cada aula extra no mesmo dia
-                penalidade += 1 * (quantidade - 1)
+                penalidade += 2 * (quantidade - 1)
     
     return penalidade
 
@@ -98,7 +115,7 @@ def penalidade_aulas_consecutivas(solucao):
 def penalidade_aulas_sozinhas(solucao):
 
     penalidade = 0
-    turmas = defaultdict(lambda: defaultdict(list))  # turma -> dia -> lista de blocos
+    turmas = defaultdict(lambda: defaultdict(list))  
 
     for var, aula in solucao.items():
         if var.startswith("aula_"):
@@ -110,16 +127,36 @@ def penalidade_aulas_sozinhas(solucao):
     for turma, dias in turmas.items():
         for blocos in dias.values():
             if len(blocos) == 1:
-                penalidade += 1  # aula isolada → penalidade
+                penalidade += 1  
 
     return penalidade
 
+def penalidade_min_salas_por_turma_por_dia(solucao):
+
+    penalidade = 0
+    turmas_por_dia = defaultdict(lambda: defaultdict(set))  # turma -> dia -> salas
+
+    for var, aula in solucao.items():
+        if var.startswith("aula_"):
+            partes = var.split("_")
+            turma = partes[3]
+            dia = bloco_para_dia(aula.bloco)
+            turmas_por_dia[turma][dia].add(aula.sala)
+
+    for turma, dias in turmas_por_dia.items():
+        for salas in dias.values():
+            if len(salas) > 1:
+                # Penaliza cada sala extra além da primeira
+                penalidade += len(salas) - 1
+
+    return penalidade
 
 def pontuacao(solucao):
     return (penalidade_uc_dias_distintos(solucao) +
             penalidade_max_4_dias_por_turma(solucao) +
             penalidade_aulas_consecutivas(solucao) +
-            penalidade_aulas_sozinhas(solucao))
+            penalidade_aulas_sozinhas(solucao) +
+            penalidade_min_salas_por_turma_por_dia(solucao))
 
 def hill_climbing(solucao_inicial, iteracoes=10000):
     melhor_solucao = copy.deepcopy(solucao_inicial)
@@ -128,21 +165,18 @@ def hill_climbing(solucao_inicial, iteracoes=10000):
     variaveis = [v for v in melhor_solucao.keys() if v.startswith("aula_")]
 
     for _ in range(iteracoes):
-        # Escolher uma aula aleatória
+
         var = random.choice(variaveis)
         aula_atual = melhor_solucao[var]
 
-        # Trocar para outro bloco aleatório
         blocos_possiveis = [b for b in range(1, 21) if b != aula_atual.bloco]
         if not blocos_possiveis:
             continue
         bloco_novo = random.choice(blocos_possiveis)
 
-        # Criar nova solução candidata
         nova_solucao = copy.deepcopy(melhor_solucao)
         nova_solucao[var].bloco = bloco_novo
 
-        # Avaliar pontuação completa (todas as penalidades)
         nova_pontuacao = pontuacao(nova_solucao)
         if nova_pontuacao < melhor_pontuacao:
             melhor_solucao = nova_solucao
