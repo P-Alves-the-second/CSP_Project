@@ -5,6 +5,7 @@ from collections import defaultdict
 from constraints import AllDifferentAttrConstraint, not_same_room
 from models import Aula
 import data
+from graph import mostar_horario
 
 
 from constraint import Problem, AllDifferentConstraint
@@ -75,20 +76,23 @@ for a1, a2 in pares_aulas:
     problema.addConstraint(not_same_room, (a1, a2))
 
 solucao = problema.getSolution()
-if solucao:
-    print("\n=== HORÁRIO GERADO ===\n")
-    print(f"{'Turma':<6} | {'UC':<6} | {'Aula':<5} | {'Bloco':<5} | {'Professor':<10} | {'Sala'}")
-    print("-" * 65)
+horario = []
 
-    for var, valor in sorted(solucao.items()):
-        if var.startswith("aula_"):
-            partes = var.split("_")
+for var, valor in sorted(solucao.items()):
+    if var.startswith("aula_"):
+        partes = var.split("_")
+        _, uc, professor, turma, aula_idx = partes
+        aula = "1ª" if aula_idx == "1" else "2ª"
+        bloco = valor.bloco
+        sala = valor.sala
 
-            _, uc, professor, turma, aula_idx = partes
+        horario.append({
+            "Turma": turma,
+            "UC": uc,
+            "Aula": aula,
+            "Bloco": bloco,
+            "Professor": professor,
+            "Sala": sala
+        })
 
-            aula = "1ª" if aula_idx == "1" else "2ª"
-            
-            bloco = valor.bloco
-            sala = valor.sala
-
-            print(f"{turma:<6} | {uc:<6} | {aula:<5} | {bloco:<5} | {professor:<10} | {sala}")
+mostar_horario(horario)

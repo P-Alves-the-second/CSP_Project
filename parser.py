@@ -1,6 +1,4 @@
-import re
 from pprint import pprint
-
 
 def parse_dataset(dataset_text: str):
     sections = {}
