@@ -93,7 +93,7 @@ def penalidade_max_4_dias_por_turma(solucao):
             turmas[turma].add(dia)
     for dias_turma in turmas.values():
         if len(dias_turma) >= 4:
-            penalidade += len(dias_turma) - 4
+            penalidade += (len(dias_turma) - 4)*2
     return penalidade
 
 def penalidade_aulas_consecutivas(solucao):
@@ -128,7 +128,7 @@ def penalidade_aulas_sozinhas(solucao):
     for turma, dias in turmas.items():
         for blocos in dias.values():
             if len(blocos) == 1:
-                penalidade += 1  
+                penalidade += 2  
 
     return penalidade
 
@@ -247,19 +247,17 @@ def violates_hard_constraints_for_move(solucao, var, bloco_novo, all_variables):
     return False
 
 
-def hill_climbing(solucao_inicial, iteracoes=10000):
+def hill_climbing(solucao_inicial, iteracoes=10000, temp_inicial=10.0, decaimento=0.995):
     melhor_solucao = copy.deepcopy(solucao_inicial)
     melhor_pontuacao = pontuacao(melhor_solucao)
-
     variaveis = [v for v in melhor_solucao.keys() if v.startswith("aula_")]
 
-    for _ in range(iteracoes):
+    temperatura = temp_inicial
+
+    for i in range(iteracoes):
         var = random.choice(variaveis)
         aula_atual = melhor_solucao[var]
-
         blocos_possiveis = [b for b in range(1, 21) if b != aula_atual.bloco]
-        if not blocos_possiveis:
-            continue
         bloco_novo = random.choice(blocos_possiveis)
 
         if violates_hard_constraints_for_move(melhor_solucao, var, bloco_novo, variaveis):
@@ -269,11 +267,12 @@ def hill_climbing(solucao_inicial, iteracoes=10000):
         nova_solucao[var].bloco = bloco_novo
 
         nova_pontuacao = pontuacao(nova_solucao)
-        temperatura = max(0.1, (1 - _ / iteracoes))  # decaimento linear
         delta = nova_pontuacao - melhor_pontuacao
 
         if delta < 0 or random.random() < math.exp(-delta / temperatura):
             melhor_solucao = nova_solucao
             melhor_pontuacao = nova_pontuacao
+
+        temperatura *= decaimento
 
     return melhor_solucao

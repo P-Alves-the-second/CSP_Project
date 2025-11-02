@@ -80,7 +80,7 @@ for a1, a2 in pares_aulas:
     problema.addConstraint(not_same_room, (a1, a2))
 
 solucao = problema.getSolution()
-solucao_otimizada = hill_climbing(solucao, iteracoes=50000)
+solucao_otimizada = hill_climbing(solucao, iteracoes=100000)
 horario = []
 
 for var, valor in sorted(solucao_otimizada.items()):
