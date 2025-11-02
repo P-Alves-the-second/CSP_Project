@@ -21,9 +21,8 @@ def mostrar_horario(horario):
 
     df['Dia'] = df['Bloco'].apply(bloco_para_dia)
     df['Bloco_no_dia'] = df['Bloco'] % 4
-    df['Bloco_no_dia'] = df['Bloco_no_dia'].replace(0, 4)  # Ajuste para múltiplos de 4
+    df['Bloco_no_dia'] = df['Bloco_no_dia'].replace(0, 4)  
 
-    # Configuração do gráfico
     turmas = df['Turma'].unique()
     fig, ax = plt.subplots(figsize=(14, 6))
 
@@ -33,7 +32,6 @@ def mostrar_horario(horario):
 
     dia_offsets = {"Segunda":0, "Terça":5, "Quarta":10, "Quinta":15, "Sexta":20}
 
-    # Plotar os blocos
     for i, turma in enumerate(turmas):
         turma_data = df[df['Turma'] == turma]
         for _, row in turma_data.iterrows():
@@ -43,7 +41,6 @@ def mostrar_horario(horario):
             ax.text(row['Bloco_no_dia'] + offset + 0.2, i, f"{row['UC']}\n{row['Professor']}\n{row['Sala']}",
                     va='center', ha='left', fontsize=7)
 
-    # Linhas verticais separando os dias
     for offset in dia_offsets.values():
         ax.axvline(offset, color='black', linestyle='--', linewidth=0.7)
 
@@ -53,7 +50,6 @@ def mostrar_horario(horario):
     ax.set_ylabel("Turma")
     ax.set_title("Horário das Turmas")
 
-    # Ajustar ticks do eixo X para mostrar dias
     ax.set_xticks([dia_offsets[d] + 2 for d in dia_offsets])
     ax.set_xticklabels(list(dia_offsets.keys()))
 
