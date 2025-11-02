@@ -16,7 +16,7 @@ def bloco_para_dia(bloco):
         else:
             return "Outro"
 
-def mostar_horario(horario):
+def mostrar_horario(horario):
     df = pd.DataFrame(horario)
 
     df['Dia'] = df['Bloco'].apply(bloco_para_dia)

@@ -5,7 +5,7 @@ from collections import defaultdict
 from constraints import AllDifferentAttrConstraint, not_same_room, MaxAulasPorDiaConstraint, hill_climbing, OnlineMax3SameDayConstraint
 from models import Aula
 import data
-from graph import mostar_horario
+from graph import mostrar_horario
 
 
 from constraint import Problem, AllDifferentConstraint
@@ -100,4 +100,4 @@ for var, valor in sorted(solucao_otimizada.items()):
             "Sala": sala
         })
 
-mostar_horario(horario)
+mostrar_horario(horario)
