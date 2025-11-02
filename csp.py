@@ -2,7 +2,7 @@ from parser import parse_dataset
 from pprint import pprint
 from itertools import combinations
 from collections import defaultdict
-from constraints import AllDifferentAttrConstraint, not_same_room
+from constraints import AllDifferentAttrConstraint, not_same_room, MaxAulasPorDiaConstraint, hill_climbing
 from models import Aula
 import data
 from graph import mostar_horario
@@ -60,6 +60,8 @@ for turma in TURMAS:
         vars_uc.extend([v for v in problema._variables.keys() if turma in v and v.startswith("aula_")])
     
         problema.addConstraint(AllDifferentAttrConstraint("bloco"), vars_uc)
+        problema.addConstraint(MaxAulasPorDiaConstraint(max_por_dia=3), vars_uc)
+        
 
 for prof in PROFESSORES:
         vars_prof = []
@@ -76,9 +78,10 @@ for a1, a2 in pares_aulas:
     problema.addConstraint(not_same_room, (a1, a2))
 
 solucao = problema.getSolution()
+solucao_otimizada = hill_climbing(solucao, iteracoes=2000)
 horario = []
 
-for var, valor in sorted(solucao.items()):
+for var, valor in sorted(solucao_otimizada.items()):
     if var.startswith("aula_"):
         partes = var.split("_")
         _, uc, professor, turma, aula_idx = partes

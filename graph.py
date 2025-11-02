@@ -2,11 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def mostar_horario(horario):
-    df = pd.DataFrame(horario)
-
-# Mapear blocos para dias da semana
-    def bloco_para_dia(bloco):
+def bloco_para_dia(bloco):
         if 1 <= bloco <= 4:
             return "Segunda"
         elif 5 <= bloco <= 8:
@@ -19,6 +15,9 @@ def mostar_horario(horario):
             return "Sexta"
         else:
             return "Outro"
+
+def mostar_horario(horario):
+    df = pd.DataFrame(horario)
 
     df['Dia'] = df['Bloco'].apply(bloco_para_dia)
     df['Bloco_no_dia'] = df['Bloco'] % 4
